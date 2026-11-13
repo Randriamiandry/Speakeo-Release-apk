@@ -1,0 +1,39 @@
+name: Publish APK to Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download APK
+        run: |
+          curl -L -o app-release.apk "https://release-assets.githubusercontent.com/github-production-release-asset/1335343751/e6304a9b-e742-4cd7-b81a-2c5233510a5f?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-11-13T10%3A08%3A54Z&rscd=attachment%3B+filename%3Dapp-release.apk&rsct=application%2Fvnd.android.package-archive&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-11-13T09%3A08%3A18Z&ske=2026-11-13T10%3A08%3A54Z&sks=b&skv=2018-11-09&sig=rNkjKBOxXkYX8UfsVGAp%2BAMd7o6gxF5G6vPOV0cUkV4%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5NDU2MjY5OCwibmJmIjoxNzk0NTYwODk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.1S2GYKvp35SOdCi-ujWbY2t5qJfU4ks6P08bnUX_AzA&response-content-disposition=attachment%3B%20filename%3Dapp-release.apk&response-content-type=application%2Fvnd.android.package-archive"
+      
+      - name: Verify APK exists
+        run: ls -lh app-release.apk
+
+      - name: Generate Tag Name
+        id: tag_generator
+        run: echo "TAG_NAME=release-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Create Release and Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: "Speakeo Release ${{ env.TAG_NAME }}"
+          files: app-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
